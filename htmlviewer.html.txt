@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Force Desktop Mode on Mobile (fixed large width, no mobile scaling) -->
+    <meta name="viewport" content="width=1200, initial-scale=1.0">
+    <title>Free Weekly Winner</title>
+    <!-- Poppins Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: white;
+            color: black;
+            text-align: center;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 3.8em;
+            font-weight: 900;
+            margin: 20px 0;
+            letter-spacing: 3px;
+            color: #ff4757;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 20px auto;
+            max-width: 100%;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: separate;
+            border-spacing: 10px;
+            min-width: 900px; /* Desktop layout forced */
+            width: 90%;
+        }
+        th {
+            font-size: 2.2em;
+            font-weight: 700;
+            padding: 20px 40px;
+            background: #f8f8f8;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        td {
+            padding: 20px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.6em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        .numberCell {
+            font-size: 2.8em;
+            font-weight: 900;
+            color: #333;
+            text-align: center;
+        }
+        .deleteBtn {
+            padding: 14px 30px;
+            font-size: 1.4em;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .deleteBtn:hover {
+            background: #c0392b;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        button#addParticipant, button#spinBtn {
+            padding: 20px 60px;
+            font-size: 2em;
+            font-weight: 700;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        button#spinBtn {
+            background: #ff4757;
+            padding: 25px 100px;
+            font-size: 2.5em;
+        }
+        button#addParticipant:hover, button#spinBtn:hover {
+            transform: scale(1.08);
+        }
+        #winnerName {
+            font-size: 5em;
+            font-weight: 900;
+            color: #ff4757;
+        }
+        #winnerNo, #winnerUID {
+            font-size: 4.2em;
+            font-weight: 700;
+            color: #333;
+        }
+    </style>
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Win Sound -->
+    <audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
+</head>
+<body>
+    <h1>FREE WEEKLY WINNER</h1>
+
+    <!-- Participants Entry Table -->
+    <div class="table-wrapper">
+        <table id="participantsTable">
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Name</th>
+                    <th>UID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="buttons">
+        <button id="addParticipant">Add New Participant</button>
+        <button id="spinBtn">SPIN FOR WINNER!</button>
+    </div>
+
+    <!-- Winner Display Table -->
+    <div class="table-wrapper">
+        <div id="winner">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Name</th>
+                        <th>UID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="winnerNo">-</td>
+                        <td id="winnerName">-</td>
+                        <td id="winnerUID">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let participantCount = 0;
+
+        function addRow() {
+            participantCount++;
+            const tbody = document.querySelector('#participantsTable tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="numberCell">${participantCount}</td>
+                <td><input type="text" class="nameInput" placeholder="Name"></td>
+                <td><input type="text" class="uidInput" placeholder="Free Fire UID"></td>
+                <td><button class="deleteBtn" onclick="removeRow(this)">Remove</button></td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        function removeRow(button) {
+            button.closest('tr').remove();
+            updateNumbers();
+        }
+
+        function updateNumbers() {
+            const rows = document.querySelectorAll('#participantsTable tbody tr');
+            participantCount = rows.length;
+            rows.forEach((row, index) => {
+                row.querySelector('.numberCell').textContent = index + 1;
+            });
+        }
+
+        // Start with one empty row
+        window.onload = function() {
+            addRow();
+        };
+
+        document.getElementById('addParticipant').onclick = addRow;
+
+        function getParticipants() {
+            const entries = [];
+            const rows = document.querySelectorAll('#participantsTable tbody tr');
+            rows.forEach(row => {
+                const nameInput = row.querySelector('.nameInput');
+                const uidInput = row.querySelector('.uidInput');
+                const name = nameInput.value.trim();
+                const uid = uidInput.value.trim();
+                if (name !== '' || uid !== '') {
+                    const no = row.querySelector('.numberCell').textContent;
+                    entries.push({ no, name: name || '-', uid: uid || '-' });
+                }
+            });
+            return entries;
+        }
+
+        document.getElementById('spinBtn').onclick = function() {
+            const participants = getParticipants();
+            if (participants.length === 0) {
+                alert('Please add at least one participant with Name or UID!');
+                return;
+            }
+
+            const winnerIndex = Math.floor(Math.random() * participants.length);
+            const winner = participants[winnerIndex];
+
+            const winnerNoTd = document.getElementById('winnerNo');
+            const winnerNameTd = document.getElementById('winnerName');
+            const winnerUIDTd = document.getElementById('winnerUID');
+
+            winnerNameTd.textContent = 'Spinning...';
+            winnerNoTd.textContent = '-';
+            winnerUIDTd.textContent = '-';
+
+            let ticks = 0;
+            const totalTicks = 50 + Math.floor(Math.random() * 40);
+            let delay = 50;
+
+            function spinTick() {
+                if (ticks < totalTicks) {
+                    const randomEntry = participants[Math.floor(Math.random() * participants.length)];
+                    winnerNoTd.textContent = randomEntry.no;
+                    winnerNameTd.textContent = randomEntry.name;
+                    winnerUIDTd.textContent = randomEntry.uid;
+
+                    ticks++;
+                    delay = 50 + (ticks * 10);
+                    setTimeout(spinTick, delay);
+                } else {
+                    winnerNoTd.textContent = winner.no;
+                    winnerNameTd.innerHTML = winner.name + '<br><span style="font-size:0.7em;">WINS! 🎉</span>';
+                    winnerUIDTd.textContent = winner.uid;
+
+                    document.getElementById('winSound').play();
+
+                    confetti({
+                        particleCount: 350,
+                        spread: 120,
+                        origin: { y: 0.6 }
+                    });
+                    confetti({
+                        particleCount: 200,
+                        angle: 60,
+                        spread: 80,
+                        origin: { x: 0, y: 0.8 }
+                    });
+                    confetti({
+                        particleCount: 200,
+                        angle: 120,
+                        spread: 80,
+                        origin: { x: 1, y: 0.8 }
+                    });
+                }
+            }
+
+            spinTick();
+        };
+    </script>
+</body>
+</html>
